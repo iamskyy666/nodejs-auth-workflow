@@ -74,7 +74,7 @@ app.use(express.static("./public"));
 // Swagger Documentation
 // ============================================================================
 
-app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
+// app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // ============================================================================
 // Routes
@@ -108,7 +108,6 @@ const start = async () => {
     await connectDB(process.env.MONGO_URI);
 
     app.listen(PORT, () => {
-      console.log(`🟢 MongoDB Connected`);
       console.log(`🔵 Server running on port ${PORT}`);
      // console.log(`📄 API Docs: http://localhost:${PORT}/api-docs`);
     });
