@@ -1,7 +1,7 @@
 {
   "name": "ecommerce-api",
   "version": "1.0.0",
-  "description": "E-Commerce REST-Api in Node/ExpressJS",
+  "description": "Nodejs Auth-Workflow",
   "main": "app.js",
   "type": "module",
   "scripts": {

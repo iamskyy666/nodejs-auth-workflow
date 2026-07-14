@@ -20,26 +20,32 @@ const register = async (req, res) => {
   const isFirstAccount = (await User.countDocuments()) === 0;
   const role = isFirstAccount ? "admin" : "user";
 
+  const verificationToken = "fake token";
+
   // Create user in the database.
   const user = await User.create({
     name,
     email,
     password,
     role,
+    verificationToken,
   });
 
   // Create the JWT payload.
-  const tokenUser = createTokenUser(user);
+  // const tokenUser = createTokenUser(user);
 
   // Generate JWT & attach it as an HTTP-only cookie.
-  const token = attachCookiesToResp({
-    res,
-    user: tokenUser,
-  });
+  // const token = attachCookiesToResp({
+  //   res,
+  //   user: tokenUser,
+  // });
 
+  //! temporary - send verification token back only testing in POSTMAN 🟠
   res.status(StatusCodes.CREATED).json({
-    user: tokenUser,
-    token,
+    msg: "Success! Please check your email to verify account!",
+    verificationToken: user.verificationToken,
+    // user: tokenUser,
+    // token,
   });
 };
 
