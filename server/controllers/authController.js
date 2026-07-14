@@ -9,6 +9,7 @@ import { attachCookiesToResp } from "../utils/jwt.js";
 import BadRequestError from "../errors/bad-request.js";
 import UnauthenticatedError from "../errors/unauthenticated.js";
 import createTokenUser from "../utils/createTokenUser.js";
+import crypto from "crypto";
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -20,7 +21,7 @@ const register = async (req, res) => {
   const isFirstAccount = (await User.countDocuments()) === 0;
   const role = isFirstAccount ? "admin" : "user";
 
-  const verificationToken = "fake token";
+  const verificationToken = crypto.randomBytes(40).toString("hex");
 
   // Create user in the database.
   const user = await User.create({
@@ -31,21 +32,10 @@ const register = async (req, res) => {
     verificationToken,
   });
 
-  // Create the JWT payload.
-  // const tokenUser = createTokenUser(user);
-
-  // Generate JWT & attach it as an HTTP-only cookie.
-  // const token = attachCookiesToResp({
-  //   res,
-  //   user: tokenUser,
-  // });
-
   //! temporary - send verification token back only testing in POSTMAN 🟠
   res.status(StatusCodes.CREATED).json({
     msg: "Success! Please check your email to verify account!",
     verificationToken: user.verificationToken,
-    // user: tokenUser,
-    // token,
   });
 };
 
