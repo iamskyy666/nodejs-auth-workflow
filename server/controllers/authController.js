@@ -74,6 +74,10 @@ const login = async (req, res) => {
     throw new UnauthenticatedError("🔴 Invalid credentials.");
   }
 
+  if (!user.isVerified) {
+    throw new UnauthenticatedError("🔴 Please verify your email.");
+  }
+
   // Create the JWT payload.
   const tokenUser = createTokenUser(user);
 
