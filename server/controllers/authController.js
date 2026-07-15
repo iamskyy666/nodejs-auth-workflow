@@ -10,6 +10,7 @@ import BadRequestError from "../errors/bad-request.js";
 import UnauthenticatedError from "../errors/unauthenticated.js";
 import createTokenUser from "../utils/createTokenUser.js";
 import crypto from "crypto"; // for proper verification-token
+import sendVerificationEmail from "../utils/sendVerificationEmail.js";
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -32,10 +33,20 @@ const register = async (req, res) => {
     verificationToken,
   });
 
+  // set up origin - // front-end (create-react-app)
+  const origin = `http://localhost:3000`;
+
+  // send verification-email
+  await sendVerificationEmail({
+    name: user.name,
+    email: user.email,
+    verificationToken: user.verificationToken,
+    origin,
+  });
+
   //! temporary - send verification token back only testing in POSTMAN 🟠
   res.status(StatusCodes.CREATED).json({
-    msg: "Success! Please check your email to verify account!",
-    verificationToken: user.verificationToken,
+    msg: "🎉 Success! Please check your email to verify account!",
   });
 };
 
@@ -104,14 +115,29 @@ const logout = async (req, res) => {
 // @route   GET /api/v1/auth/verify-email
 // @access  Public
 const verifyEmail = async (req, res) => {
+  // temp
+  console.log("Request Body:", req.body);
+
   const { verificationToken, email } = req.body;
+
+  // temp
+  console.log("Token from request:", verificationToken);
+  console.log("Email from request:", email);
 
   // Find user by email.
   const user = await User.findOne({ email });
 
+  // temp
+  console.log("User from DB:", user);
+
   if (!user) {
     throw new UnauthenticatedError("🔴 ERROR -  Verification failed!");
   }
+
+  // temp
+  console.log("DB token:", user.verificationToken);
+  console.log("Incoming token:", verificationToken);
+  console.log("Equal?", user.verificationToken === verificationToken);
 
   if (user.verificationToken !== verificationToken) {
     throw new UnauthenticatedError("🔴 ERROR - Verification failed!");
