@@ -9,7 +9,7 @@ import { attachCookiesToResp } from "../utils/jwt.js";
 import BadRequestError from "../errors/bad-request.js";
 import UnauthenticatedError from "../errors/unauthenticated.js";
 import createTokenUser from "../utils/createTokenUser.js";
-import crypto from "crypto";
+import crypto from "crypto"; // for proper verification-token
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -100,4 +100,35 @@ const logout = async (req, res) => {
   });
 };
 
-export { register, login, logout };
+// @desc    Verify user-email
+// @route   GET /api/v1/auth/verify-email
+// @access  Public
+const verifyEmail = async (req, res) => {
+  const { verificationToken, email } = req.body;
+
+  // Find user by email.
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new UnauthenticatedError("🔴 ERROR -  Verification failed!");
+  }
+
+  if (user.verificationToken !== verificationToken) {
+    throw new UnauthenticatedError("🔴 ERROR - Verification failed!");
+  }
+
+  ((user.isVerified = true),
+    (user.verified = Date.now()),
+    (user.verificationToken = ""));
+
+  // save the instance
+  await user.save();
+
+  res.status(StatusCodes.OK).json({
+    verificationToken,
+    email,
+    msg: "Email verified! 🟢",
+  });
+};
+
+export { register, login, logout, verifyEmail };
