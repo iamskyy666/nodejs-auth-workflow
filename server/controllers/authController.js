@@ -5,12 +5,14 @@
 
 import { StatusCodes } from "http-status-codes";
 import User from "../models/user.model.js";
-import { attachCookiesToResp } from "../utils/jwt.js";
+// import { attachCookiesToResp } from "../utils/jwt.js";
 import BadRequestError from "../errors/bad-request.js";
 import UnauthenticatedError from "../errors/unauthenticated.js";
 import createTokenUser from "../utils/createTokenUser.js";
 import crypto from "crypto"; // for proper verification-token
 import sendVerificationEmail from "../utils/sendVerificationEmail.js";
+import Token from "../models/token.model.js";
+import { attachCookiesToResp } from "../utils/jwt.js";
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -83,15 +85,23 @@ const login = async (req, res) => {
   // Create the JWT payload.
   const tokenUser = createTokenUser(user);
 
-  // Generate JWT & attach it as an HTTP-only cookie.
-  const token = attachCookiesToResp({
-    res,
-    user: tokenUser,
-  });
+  // create refresh token
+  let refreshToken = "";
+
+  //todo: check for existing token
+
+  refreshToken = crypto.randomBytes(40).toString("hex");
+  const userAgent = req.headers["user-agent"];
+  const ip = req.ip;
+  const userToken = { refreshToken, ip, userAgent, user: user._id };
+
+  // create token
+  await Token.create(userToken);
+
+  attachCookiesToResp({ res, user: tokenUser, refreshToken });
 
   res.status(StatusCodes.OK).json({
     user: tokenUser,
-    token,
   });
 };
 

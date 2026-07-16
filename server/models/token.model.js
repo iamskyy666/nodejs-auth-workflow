@@ -7,7 +7,7 @@ import mongoose from "mongoose";
 
 const TokenSchema = new mongoose.Schema(
   {
-    refreshTokens: { type: String, required: true },
+    refreshToken: { type: String, required: true },
     ip: { type: String, required: true },
     userAgent: { type: String, required: true },
     isValid: { type: Boolean, default: true },
