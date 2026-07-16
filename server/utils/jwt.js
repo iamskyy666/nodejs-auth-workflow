@@ -24,7 +24,7 @@ const attachCookiesToResp = ({ res, user, refreshToken }) => {
     secure: process.env.NODE_ENV === "production",
     signed: true,
     // expires: new Date(Date.now() + oneDay),
-    maxAge: 1000,
+    maxAge: 1000 * 60 * 15,
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {

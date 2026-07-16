@@ -1,20 +1,36 @@
 import UnauthenticatedError from "../errors/unauthenticated.js";
-import { isTokenValid } from "../utils/jwt.js";
+import Token from "../models/token.model.js";
+import { attachCookiesToResp, isTokenValid } from "../utils/jwt.js";
 
 async function authenticateUser(req, res, next) {
-  const token = req.signedCookies.token;
-
-  if (!token) {
-    throw new UnauthenticatedError("🔴 Authentication Invalid!");
-  }
+  const { refreshToken, accessToken } = req.signedCookies;
 
   // But, if the token is present..
   try {
-    const { name, userId, role } = isTokenValid(token);
-    req.user = { name, userId, role };
-    next();
-  } catch (error) {
-    console.log(error);
+    if (accessToken) {
+      const payload = isTokenValid(accessToken);
+      req.user = payload.user;
+      return next();
+    }
+
+    const payload = isTokenValid(accessToken);
+    const existingToken = await Token.findOne({
+      user: payload.user.userId,
+      refreshToken: payload.refreshToken,
+    });
+
+    if (!existingToken || !existingToken?.isValid) {
+      throw new UnauthenticatedError("🔴 Authentication Invalid!");
+    }
+
+    req.user = payload.user;
+    attachCookiesToResp({
+      res,
+      user: payload.user,
+      refreshToken: existingToken.refreshToken,
+    });
+  } catch (err) {
+    console.log(err);
     throw new UnauthenticatedError("🔴 Authentication Invalid!");
   }
 }
