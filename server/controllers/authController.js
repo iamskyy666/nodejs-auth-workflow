@@ -35,6 +35,7 @@ const register = async (req, res) => {
 
   // set up origin - // front-end (create-react-app)
   const origin = `http://localhost:3000`;
+  // const newOrigin = `https://react-node-user-workflow-front-end.netlify.app`;
 
   // send verification-email
   await sendVerificationEmail({
