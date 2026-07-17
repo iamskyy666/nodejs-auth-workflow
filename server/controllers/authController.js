@@ -20,6 +20,15 @@ import { attachCookiesToResp } from "../utils/jwt.js";
 const register = async (req, res) => {
   const { name, email, password } = req.body;
 
+  // check is user-email already present
+  const emailAlreadyExists = await User.findOne({ email });
+
+  if (emailAlreadyExists) {
+    throw new BadRequestError(
+      "🔴 Email already exists! Try with another one..",
+    );
+  }
+
   // First registered account becomes the administrator.
   const isFirstAccount = (await User.countDocuments()) === 0;
   const role = isFirstAccount ? "admin" : "user";
@@ -123,7 +132,7 @@ const login = async (req, res) => {
 
 // @desc    Logout current user
 // @route   DELETE /api/v1/auth/logout
-// @access  Public
+// @access  Private
 const logout = async (req, res) => {
   await Token.findOneAndDelete({ user: req.userId });
 
@@ -191,4 +200,75 @@ const verifyEmail = async (req, res) => {
   });
 };
 
-export { register, login, logout, verifyEmail };
+// @desc    Forgot password
+// @route   POST /api/v1/auth/forgot-password
+// @access  Public
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new BadRequestError("🔴 Please provide valid-email!");
+  }
+
+  const user = await User.findOne({ email });
+
+  if (user) {
+    const passwordToken = crypto.randomBytes(70).toString("hex");
+    // send email
+
+    const tenMinutes = 1000 * 60 * 10;
+
+    const passwordTokenExpDur = new Date(Date.now() + tenMinutes);
+
+    user.passwordToken = passwordToken;
+    user.passwordTokenExpDate = passwordTokenExpDur;
+
+    // finally, save
+    await user.save();
+  }
+
+  res.status(StatusCodes.OK).json({
+    msg: "💡 Please check your email for reset-password link!",
+  });
+};
+
+// @desc    Reset the password
+// @route   POST /api/v1/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  // First registered account becomes the administrator.
+  const isFirstAccount = (await User.countDocuments()) === 0;
+  const role = isFirstAccount ? "admin" : "user";
+
+  const verificationToken = crypto.randomBytes(40).toString("hex");
+
+  // Create user in the database.
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role,
+    verificationToken,
+  });
+
+  // set up origin - // front-end (create-react-app)
+  const origin = `http://localhost:3000`;
+  // const newOrigin = `https://react-node-user-workflow-front-end.netlify.app`;
+
+  // send verification-email
+  await sendVerificationEmail({
+    name: user.name,
+    email: user.email,
+    verificationToken: user.verificationToken,
+    origin,
+  });
+
+  //! temporary - send verification token back only testing in POSTMAN 🟠
+  res.status(StatusCodes.CREATED).json({
+    msg: "🎉 Success! Please check your email to verify account!",
+  });
+};
+
+export { register, login, logout, verifyEmail, forgotPassword, resetPassword };

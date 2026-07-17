@@ -38,6 +38,7 @@ const attachCookiesToResp = ({ res, user, refreshToken }) => {
 };
 
 //! -------------------- SEND SINGLE-COOKIE 🍪 ------------------------------
+
 //! 🔵 Create single JWT
 // const createSingleJWT = ({ payload }) => {
 //   return jwt.sign(payload, process.env.JWT_SECRET, {

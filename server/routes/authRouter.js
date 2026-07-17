@@ -1,8 +1,10 @@
 import { Router } from "express";
 import {
+  forgotPassword,
   login,
   logout,
   register,
+  resetPassword,
   verifyEmail,
 } from "../controllers/authController.js";
 
@@ -21,5 +23,7 @@ authRouter.post("/register", register);
 authRouter.post("/login", login);
 authRouter.delete("/logout", authenticateUser, logout);
 authRouter.post("/verify-email", verifyEmail);
+authRouter.post("/forgot-password", forgotPassword);
+authRouter.post("/reset-password", resetPassword);
 
 export default authRouter;
