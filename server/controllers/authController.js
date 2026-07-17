@@ -14,6 +14,7 @@ import sendVerificationEmail from "../utils/sendVerificationEmail.js";
 import Token from "../models/token.model.js";
 import { attachCookiesToResp } from "../utils/jwt.js";
 import sendResetPasswordEmail from "../utils/sendResetPasswordEmail.js";
+import hashString from "../utils/createHash.js";
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -230,7 +231,7 @@ const forgotPassword = async (req, res) => {
 
     const passwordTokenExpDur = new Date(Date.now() + tenMinutes);
 
-    user.passwordToken = passwordToken;
+    user.passwordToken = hashString(passwordToken);
     user.passwordTokenExpDate = passwordTokenExpDur;
 
     // finally, save
@@ -248,9 +249,6 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   const { token, email, password } = req.body;
 
-  // check is user-email already present
-  const emailAlreadyExists = await User.findOne({ email });
-
   if (!token || !email || !password) {
     throw new BadRequestError("🔴 Please provide all values");
   }
@@ -261,7 +259,7 @@ const resetPassword = async (req, res) => {
     const currentDate = new Date();
 
     if (
-      user.passwordToken === token &&
+      user.passwordToken === hashString(token) &&
       user.passwordTokenExpDate > currentDate
     ) {
       user.password = password;
@@ -274,7 +272,7 @@ const resetPassword = async (req, res) => {
   }
 
   res.status(StatusCodes.CREATED).json({
-    msg: "🎉 Success! Please check your email to verify account!",
+    msg: "✅ Password reset successful!",
   });
 };
 
