@@ -20,6 +20,7 @@ async function sendEmail({ to, subject, text = "Hello world?", html }) {
     return info;
   } catch (err) {
     console.error("Error while sending mail:", err);
+    throw err;
   }
 }
 

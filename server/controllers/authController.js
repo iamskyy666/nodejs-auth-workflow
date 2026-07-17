@@ -13,6 +13,7 @@ import crypto from "crypto"; // for proper verification-token
 import sendVerificationEmail from "../utils/sendVerificationEmail.js";
 import Token from "../models/token.model.js";
 import { attachCookiesToResp } from "../utils/jwt.js";
+import sendResetPasswordEmail from "../utils/sendResetPasswordEmail.js";
 
 // @desc    Register a new user
 // @route   POST /api/v1/auth/register
@@ -105,7 +106,7 @@ const login = async (req, res) => {
     if (!isValid) {
       throw new UnauthenticatedError("🔴 Invalid credentials.");
     }
-    refreshToken = existingToken;
+    refreshToken = existingToken.refreshToken;
 
     attachCookiesToResp({ res, user: tokenUser, refreshToken });
 
@@ -215,6 +216,15 @@ const forgotPassword = async (req, res) => {
   if (user) {
     const passwordToken = crypto.randomBytes(70).toString("hex");
     // send email
+    // set up origin - // front-end (create-react-app)
+    const origin = `http://localhost:3000`;
+
+    await sendResetPasswordEmail({
+      name: user.name,
+      email: user.email,
+      token: passwordToken,
+      origin,
+    });
 
     const tenMinutes = 1000 * 60 * 10;
 
@@ -236,36 +246,33 @@ const forgotPassword = async (req, res) => {
 // @route   POST /api/v1/auth/reset-password
 // @access  Public
 const resetPassword = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { token, email, password } = req.body;
 
-  // First registered account becomes the administrator.
-  const isFirstAccount = (await User.countDocuments()) === 0;
-  const role = isFirstAccount ? "admin" : "user";
+  // check is user-email already present
+  const emailAlreadyExists = await User.findOne({ email });
 
-  const verificationToken = crypto.randomBytes(40).toString("hex");
+  if (!token || !email || !password) {
+    throw new BadRequestError("🔴 Please provide all values");
+  }
 
-  // Create user in the database.
-  const user = await User.create({
-    name,
-    email,
-    password,
-    role,
-    verificationToken,
-  });
+  const user = await User.findOne({ email });
 
-  // set up origin - // front-end (create-react-app)
-  const origin = `http://localhost:3000`;
-  // const newOrigin = `https://react-node-user-workflow-front-end.netlify.app`;
+  if (user) {
+    const currentDate = new Date();
 
-  // send verification-email
-  await sendVerificationEmail({
-    name: user.name,
-    email: user.email,
-    verificationToken: user.verificationToken,
-    origin,
-  });
+    if (
+      user.passwordToken === token &&
+      user.passwordTokenExpDate > currentDate
+    ) {
+      user.password = password;
+      user.passwordToken = null;
+      user.passwordTokenExpDate = null;
 
-  //! temporary - send verification token back only testing in POSTMAN 🟠
+      // save
+      await user.save();
+    }
+  }
+
   res.status(StatusCodes.CREATED).json({
     msg: "🎉 Success! Please check your email to verify account!",
   });
