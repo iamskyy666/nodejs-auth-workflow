@@ -97,7 +97,7 @@ const login = async (req, res) => {
       throw new UnauthenticatedError("🔴 Invalid credentials.");
     }
     refreshToken = existingToken;
-    
+
     attachCookiesToResp({ res, user: tokenUser, refreshToken });
 
     res.status(StatusCodes.OK).json({
@@ -122,13 +122,20 @@ const login = async (req, res) => {
 };
 
 // @desc    Logout current user
-// @route   GET /api/v1/auth/logout
+// @route   DELETE /api/v1/auth/logout
 // @access  Public
 const logout = async (req, res) => {
-  // Overwrite the authentication cookie and expire it immediately.
-  res.cookie("token", "logout", {
+  await Token.findOneAndDelete({ user: req.userId });
+
+  // Overwrite the cookies and expire them immediately.
+  res.cookie("accessToken", "logout", {
     httpOnly: true,
-    signed: true,
+    secure: process.env.NODE_ENV === "production",
+    expires: new Date(Date.now()),
+  });
+
+  res.cookie("refreshToken", "logout", {
+    httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     expires: new Date(Date.now()),
   });

@@ -6,6 +6,9 @@ import {
   verifyEmail,
 } from "../controllers/authController.js";
 
+import authenticateUser from "../middleware/authentication.js";
+// import authorizePermissions from "../middleware/authorization.js";
+
 const authRouter = Router();
 
 // ============================================================================
@@ -16,7 +19,7 @@ const authRouter = Router();
 // Public Routes
 authRouter.post("/register", register);
 authRouter.post("/login", login);
-authRouter.get("/logout", logout);
+authRouter.delete("/logout", authenticateUser, logout);
 authRouter.post("/verify-email", verifyEmail);
 
 export default authRouter;

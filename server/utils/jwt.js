@@ -18,20 +18,21 @@ const attachCookiesToResp = ({ res, user, refreshToken }) => {
   const refreshTokenJWT = createJWT({ payload: { user, refreshToken } }); // 🍪 2
 
   const oneDay = 1000 * 60 * 60 * 24;
+  const longerExpiryDur = 1000 * 60 * 60 * 24 * 30;
 
   res.cookie("accessToken", accessTokenJWT, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     signed: true,
-    // expires: new Date(Date.now() + oneDay),
-    maxAge: 1000 * 60 * 15,
+    expires: new Date(Date.now() + oneDay),
+    // maxAge: 1000 * 60 * 15,
   });
 
   res.cookie("refreshToken", refreshTokenJWT, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     signed: true,
-    expires: new Date(Date.now() + oneDay),
+    expires: new Date(Date.now() + longerExpiryDur),
     // maxAge: 1000,
   });
 };
